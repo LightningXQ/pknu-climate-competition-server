@@ -1,0 +1,11 @@
+fastapi>=0.100.0
+uvicorn[standard]>=0.23.0
+pydantic>=2.0.0
+supabase>=2.3.0
+xarray
+h5netcdf
+h5py
+netcdf4
+pandas
+numpy
+dotenv

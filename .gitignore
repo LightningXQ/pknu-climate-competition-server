@@ -1,1 +1,11 @@
-.idea
+# Byte-compiled
+__pycache__/
+
+# Environment Variables & Secrets
+.env
+
+# IDE / Editor
+.idea/
+
+# Large Data & Test Files
+*.nc
