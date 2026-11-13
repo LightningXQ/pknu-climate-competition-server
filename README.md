@@ -1,4 +1,4 @@
-# CERL 기상·기후 빅데이터 경진대회 자동 채점 서버
+# 기상·기후 환경분야 빅데이터 경진대회 자동 채점 서버
 
 부경대학교 **기후극한연구실(Climate Extremes Research Laboratory, CERL)** 기상·기후 빅데이터 경진대회의 자동 채점(Auto Review) 백엔드 워커 서비스입니다.
 
