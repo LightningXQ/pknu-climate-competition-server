@@ -87,3 +87,13 @@ select cron.schedule(
     $$
 );
 ```
+
+---
+
+## 📄 라이선스 및 문의
+
+- **주관**: 부경대학교 기후극한연구실 (Climate Extremes Research Laboratory)
+- **홈페이지**: [https://sites.google.com/view/cerl](https://sites.google.com/view/cerl)
+- **프로젝트 운영 관련 문의**: ycj1219@pukyong.ac.kr
+- **웹 플랫폼 유지·보수 관련 문의**: jihojeong.dev@gmail.com
+- **저작권**: © 2026. CERL. All rights reserved.
