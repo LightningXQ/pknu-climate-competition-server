@@ -1,6 +1,6 @@
 # 기상·기후 환경분야 빅데이터 경진대회 자동 채점 서버
 
-부경대학교 **기후극한연구실(Climate Extremes Research Laboratory, CERL)** 기상·기후 빅데이터 경진대회의 자동 채점(Auto Review) 백엔드 워커 서비스입니다.
+부경대학교 **극한기후연구실(Climate Extremes Research Laboratory, CERL)** 기상·기후 빅데이터 경진대회의 자동 채점(Auto Review) 백엔드 워커 서비스입니다.
 
 Supabase의 `pg_cron` 및 `pg_net` 확장을 통해 매일 마감 시간 직후 트리거되어, 제출된 NetCDF 파일들의 구조 및 오차(MAE)를 계산하고 리더보드/통계를 자동으로 갱신합니다.
 
