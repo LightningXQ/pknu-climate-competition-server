@@ -31,7 +31,6 @@ Supabase의 `pg_cron` 및 `pg_net` 확장을 통해 매일 마감 시간 직후 
 | `SUPABASE_URL` | Supabase 프로젝트 URL | `https://xxxx.supabase.co` |
 | `SUPABASE_KEY` | Supabase Service Role Key (Admin 권한) | `sb_secret_...` |
 | `REVIEW_SECRET` | pg_net HTTP 요청 인증용 시크릿 토큰 | 임의의 보안 문자열 |
-| `TARGET_VAR` | NetCDF 예측 대상 변수명 (기본값: `Vcmax25`) | `Vcmax25` |
 | `PORT` | 서버 리스닝 포트 (기본값: 8000) | `8000` |
 
 ---

@@ -9,3 +9,5 @@ __pycache__/
 
 # Large Data & Test Files
 *.nc
+
+.aiignore
