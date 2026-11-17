@@ -19,6 +19,15 @@ REQUIRED_DIMS = ("time", "lat", "lon")
 BUCKET_NAME = "pknu_climate_big_data_contest_2026"
 
 
+class InvalidFileNameError(ValueError): pass
+
+
+class NetCDFFormatError(ValueError): pass
+
+
+class EvaluationValidationError(ValueError): pass
+
+
 def get_supabase_client() -> Client:
     load_dotenv()
     url = os.environ.get("SUPABASE_URL")
@@ -34,14 +43,14 @@ def load_nc(path: str | Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.nd
     """NetCDF 파일 로드 및 유효성 검사"""
     with xr.open_dataset(path) as ds:
         if TARGET_VAR not in ds:
-            raise ValueError(f"'{TARGET_VAR}' variable is missing.")
+            raise NetCDFFormatError(f"'{TARGET_VAR}' variable is missing.")
         da = ds[TARGET_VAR]
         missing_dims = [dim for dim in REQUIRED_DIMS if dim not in da.dims]
         if missing_dims:
-            raise ValueError(f"Required dimension(s) missing: {', '.join(missing_dims)}")
+            raise NetCDFFormatError(f"Required dimension(s) missing: {', '.join(missing_dims)}")
         missing_coords = [dim for dim in REQUIRED_DIMS if dim not in ds.coords]
         if missing_coords:
-            raise ValueError(f"Required coordinate(s) missing: {', '.join(missing_coords)}")
+            raise NetCDFFormatError(f"Required coordinate(s) missing: {', '.join(missing_coords)}")
         da = da.transpose(*REQUIRED_DIMS)
         return (
             np.asarray(da.values, dtype=np.float64),
@@ -75,28 +84,26 @@ def calculate_mae(
     sub_time = sub_time[eval_mask]
 
     if submission.shape != answer.shape:
-        raise ValueError(
-            f"Shape mismatch: submission={submission.shape}, expected={answer.shape}"
-        )
+        raise EvaluationValidationError(f"Shape mismatch: submission={submission.shape}, expected={answer.shape}")
 
     if not np.array_equal(sub_time, ans_time):
-        raise ValueError("Time coordinates do not match.")
+        raise EvaluationValidationError("Time coordinates do not match.")
 
     if not np.allclose(sub_lat, ans_lat):
-        raise ValueError("Latitude coordinates do not match.")
+        raise EvaluationValidationError("Latitude coordinates do not match.")
 
     if not np.allclose(sub_lon, ans_lon):
-        raise ValueError("Longitude coordinates do not match.")
+        raise EvaluationValidationError("Longitude coordinates do not match.")
 
     answer_nan = ~np.isfinite(answer)
     submission_nan = ~np.isfinite(submission)
 
     if not np.array_equal(answer_nan, submission_nan):
-        raise ValueError("The missing-value mask has been modified.")
+        raise EvaluationValidationError("The missing-value mask has been modified.")
 
     valid = ~answer_nan
     if not valid.any():
-        raise ValueError("The answer file contains no finite evaluation cells.")
+        raise EvaluationValidationError("The answer file contains no finite evaluation cells.")
 
     mae = np.mean(np.abs(submission[valid] - answer[valid]))
     return float(mae), int(valid.sum())
@@ -198,7 +205,7 @@ def run_auto_review(target_date: Optional[str] = None) -> List[Dict[str, Any]]:
 
             try:
                 if not filename.startswith("pred_Y_") or not filename.endswith(".nc"):
-                    raise ValueError("파일명 형식이 올바르지 않습니다 ('pred_Y_팀명.nc').")
+                    raise InvalidFileNameError("파일명 형식이 올바르지 않습니다 ('pred_Y_팀명.nc').")
 
                 submission, sub_time, sub_lat, sub_lon = load_nc(local_sub_path)
                 mae, n_eval = calculate_mae(
@@ -211,13 +218,18 @@ def run_auto_review(target_date: Optional[str] = None) -> List[Dict[str, Any]]:
                     "score": round(mae, 6),
                     "n_eval": n_eval,
                 })
-            except Exception as e:
-                logger.error(f"채점 실패 ({filename}): {e} -> 999점 부여")
+            except (NetCDFFormatError, EvaluationValidationError) as e:
+                logger.info(f"채점 완료: {filename} -> 999점 부여 ({e})")
                 result.append({
                     "team_name": filename[7:-3],
                     "score": 999,
                     "n_eval": 0,
                 })
+            except InvalidFileNameError as e:
+                logger.error(f"Invalid file name {filename}: {e} -> bypass", exc_info=True)
+            except Exception as e:
+                logger.error(f"Unknown error at {filename}: {e} -> bypass", exc_info=True)
+
 
         # 3. 리더보드 및 통계 갱신
         update_leaderboard(client, result)
