@@ -1,0 +1,19 @@
+# Virtual Environments
+.venv/
+venv/
+ENV/
+
+# Python Cache & Bytecode
+__pycache__/
+
+# Environment Variables & Secrets
+.env
+.env.*
+
+# Git & Tooling
+.git/
+.gitignore
+.dockerignore
+.idea/
+.vscode/
+.aiignore
