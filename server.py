@@ -1,10 +1,13 @@
 import logging
 import os
 from typing import Optional
-from fastapi import FastAPI, Header, HTTPException, Query, BackgroundTasks
+
+from fastapi import FastAPI, Header, HTTPException, Query, BackgroundTasks, Depends
 from pydantic import BaseModel
+from supabase import Client
 
 from auto_review import run_auto_review
+from database import get_client
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("server")
@@ -44,6 +47,7 @@ def health_check():
 def trigger_auto_review(
     target_date: Optional[str] = Query(None, description="채점 대상 일자(MM-DD 형식, 기본값: 오늘)"),
     authorization: Optional[str] = Header(None),
+    client: Client = Depends(get_client)
 ):
     """
     동기식 채점 실행 엔드포인트:
@@ -51,7 +55,7 @@ def trigger_auto_review(
     """
     verify_secret(authorization)
     try:
-        result = run_auto_review(target_date=target_date)
+        result = run_auto_review(target_date=target_date, client=client)
         return ReviewResponse(
             ok=True,
             message="채점이 성공적으로 완료되었습니다.",
@@ -68,6 +72,7 @@ def trigger_auto_review_async(
     background_tasks: BackgroundTasks,
     target_date: Optional[str] = Query(None, description="채점 대상 일자(MM-DD 형식, 기본값: 오늘)"),
     authorization: Optional[str] = Header(None),
+    client: Client = Depends(get_client),
 ):
     """
     비동기 채점 실행 엔드포인트:
@@ -75,13 +80,13 @@ def trigger_auto_review_async(
     """
     verify_secret(authorization)
 
-    def task_wrapper(dt):
+    def task_wrapper(cl, dt):
         try:
-            run_auto_review(target_date=dt)
+            run_auto_review(client=cl, target_date=dt)
         except Exception:
             logger.exception("백그라운드 채점 작업 실패")
 
-    background_tasks.add_task(task_wrapper, target_date)
+    background_tasks.add_task(task_wrapper, client, target_date)
     return ReviewResponse(
         ok=True,
         message="채점 작업이 백그라운드에서 시작되었습니다.",

@@ -3,14 +3,15 @@ import os
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from zoneinfo import ZoneInfo
 from typing import Any, Dict, List, Optional, Tuple
-from dotenv import load_dotenv
+from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
 import xarray as xr
-from supabase import Client, create_client
+from supabase import Client
+
+from database import get_client
 
 logger = logging.getLogger("auto_review")
 
@@ -26,17 +27,6 @@ class NetCDFFormatError(ValueError): pass
 
 
 class EvaluationValidationError(ValueError): pass
-
-
-def get_supabase_client() -> Client:
-    load_dotenv()
-    url = os.environ.get("SUPABASE_URL")
-    key = os.environ.get("SUPABASE_KEY")
-
-    if not url or not key:
-        raise ValueError("SUPABASE_URL 및 SUPABASE_KEY가 설정되어 있지 않습니다.")
-
-    return create_client(url, key)
 
 
 def load_nc(path: str | Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
@@ -149,12 +139,13 @@ def update_statistics(client: Client, result: List[Dict[str, Any]]) -> None:
         logger.info(f"통계 저장 완료: {row['team_name']} -> {insert_data['status']}")
 
 
-def run_auto_review(target_date: Optional[str] = None) -> List[Dict[str, Any]]:
+def run_auto_review(target_date: Optional[str] = None, client: Optional[Client] = None) -> List[Dict[str, Any]]:
     """
     자동 채점 파이프라인 메인 함수.
     target_date: 'MM-DD' 형식 (기본값: 오늘 날짜 Asia/Seoul)
     """
-    client = get_supabase_client()
+    if client is None:
+        client = get_client()
 
     if target_date is None:
         curr_date = datetime.now(ZoneInfo("Asia/Seoul"))
