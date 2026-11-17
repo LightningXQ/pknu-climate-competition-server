@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY auto_review.py server.py ./
+COPY auto_review.py server.py database.py ./
 
 EXPOSE 8000
 
